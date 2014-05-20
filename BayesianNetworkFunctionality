@@ -1,0 +1,191 @@
+import numpy as np
+#import simplejson
+import json
+import networkx as nx
+#import matplotlib.pyplot as plt
+
+#Base class for all nodes in the Bayesian Network
+class Node:
+
+    def __init__(self, name, state, parents=[], children=[]):
+        if isinstance(parents, str): parents = parents.split()
+        self.name = name
+        self.parents = parents
+        self.state = state
+        self.children = children
+        self.table = []
+    
+    #change the name of the node
+    def changeName(self, newname):   
+        self.name = newname
+        'replace name in network'
+    
+    #display the name of the node
+    def displayName(self):
+        print ("Node Name = %s" % self.name)
+    
+    #add parent to the node
+    def addParent(self, node):
+        self.parents.append(node)
+        
+    #remove parent from the node
+    def removeParent(self, badparent):
+        self.parents.remove(badparent)
+        'add update to network'
+    
+    #display the parent(s) of a node
+    def displayParent(self):
+        l=[]
+        for p in self.parents:
+            l.append(p.name)
+        print ("Parents: " + str(l))    
+    
+    #display important attributes about the node        
+    def displayNode(self):
+        print ("Node Name : ", self.name)
+        l=[]
+        for p in self.parents:
+            l.append(p.name)
+        print ("Parents: " + str(l)) 
+        print("Distribution Table: ", self.table)
+    
+    #set the CPT of a node    
+    def setCPT(self, table):
+        self.table = table
+
+#class that holds the nodes to form the bayesian network        
+class BayesianNetwork:
+    'Framework for conditional relationships'
+    def __init__(self, name, nodes=None):
+        self.name = name
+        self.variables=[]
+        self.nodes = nodes
+        if(nodes == None):
+            self.nodes=[]
+        else:
+            for node in nodes:
+                self.add(node)
+            self.variables = dict([(n.name, n) for n in nodes])
+            self.root = [n for n in nodes if not n.parents]
+    
+    #add a node to the bayesian network
+    def add(self, node):
+        self.nodes.append(node)
+        self.variables.append(node.name)
+    
+    #returns the node named var from the bayesian network
+    def getNode(self, var):
+        for n in self.nodes:
+            if n.name == var:
+                return n
+    
+    #shows key information about the bayesian network including each node, its parents and its CPT    
+    def viewNetwork(self):
+        print ("\nBayesian Network: " + self.name)
+        for n in self.nodes:
+            n.displayNode()
+
+# calculates the potential for a dimension, table given a possible index
+class TablePotential:
+    #rep the numpy array
+    def __init__(self, dim, table, index=None):
+        #dim is the string I need aka the starting table
+        if(index != None):
+            self.table = np.zeros(table)
+            self.table[index] = 1
+        else:
+            self.table = np.array(table)
+        self.dim = dim
+
+#does the calculations from the variable elimination algorithm using numpy array and einsum
+def doInference(potentials):
+    #have to construct the string numpy wants
+    dims = [i.dim for i in potentials]
+    pots = [i.table for i in potentials]
+    einsumFormat = ",".join(dims)
+    #set makes it unique, list makes it sortable
+    varbs = sorted(list(set("".join(dims))))
+
+    for v in varbs:
+        vMarginal = np.einsum(einsumFormat+"->"+v,*pots)
+        vMarginal = vMarginal / np.sum(vMarginal)
+        print("{} -> {}".format(v,vMarginal))
+    
+    varsString = "".join(varbs)
+    joint = np.einsum(einsumFormat + '->'+varsString, *pots)
+    #normalize
+    joint = joint/np.sum(joint)
+    
+    print("{} -> {}".format(varsString, joint))    
+
+def drawGraph(network):
+    DG=nx.DiGraph()
+    for i in network.nodes:
+        DG.add_node(i.name)
+        if(i.parents != []):
+            for j in i.parents:
+                DG.add_weighted_edges_from([(j.name, i.name, 1)])
+    print(DG.nodes())
+    print(DG.edges())
+    
+#sample code that constructs a bayesian network
+net = BayesianNetwork("Jorge's sample net")
+
+A = Node('A',['a1','a2'])
+C = Node('C',['c1','c2','c3','c4'])
+B = Node('B',['b1','b2','b3'],[A,C])
+
+A.setCPT([0.9,0.1])
+C.setCPT([0.1,0.2,0.3,0.4])
+B.setCPT([[[0.2,0.4,0.4] , [0.33,0.33,0.34 ] ] ,[ [0.1,0.5,0.4] , [0.3,0.1,0.6 ] ] , [ [0.01,0.01,0.98] , [0.2,0.7,0.1 ] ] , [ [0.2,0.1,0.7] , [0.9,0.05,0.05 ] ] ])
+
+net.add(A)
+net.add(B)
+net.add(C)
+
+drawGraph(net)
+
+B2 = net.getNode('B')
+
+B.displayName()
+B.displayParent()
+B.displayNode()
+
+pb = TablePotential('cab', B.table)
+pa = TablePotential('a', A.table)
+pc = TablePotential('c', C.table)
+
+doInference([pa, pb, pc])
+
+B_eq_b3 = TablePotential('b',3,2) 
+print ("\n\nMarginal distributions given B=b3")
+doInference([pa, pb, pc] + [B_eq_b3])
+
+net.viewNetwork()
+
+
+def saveJSON(data, filename):
+    try:
+        jsondata = simplejson.dumps(data, indent=4, skipkeys=True, sort_keys=True)
+        fd = open(filename, 'w')
+        fd.write(jsondata)
+        fd.close()
+    except:
+        print 'ERROR writing', filename
+        pass
+ 
+def loadJSON(filename):
+    returndata = {}
+    try:
+        fd = open(filename, 'r')
+        text = fd.read()
+        fd.close()
+        returndata = simplejson.loads(text)
+    except: 
+        print 'COULD NOT LOAD:', filename
+    return returndata
+ 
+if __name__ == '__main__':
+    o = get(sys.argv[1]);
+    if o:
+        put(o, sys.argv[1]);   
