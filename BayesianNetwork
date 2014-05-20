@@ -9,15 +9,16 @@ import pdb
 import itertools as it
 import numpy as np
 import Bayesian as b
-
+ 
 ########################################################################
 class BayesianNetwork(wx.Frame):
     """"""
- 
+    
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
         wx.Frame.__init__(self, None, title="Bayesian Network")
+        self.net = b.BayesianNetwork("Jorge's sample net")
  
         self.panel = wx.Panel(self, wx.ID_ANY)
  
@@ -28,55 +29,16 @@ class BayesianNetwork(wx.Frame):
         # network menu
         networkMenu = wx.Menu()
         createNewNet = networkMenu.Append(101, "&Create new network", "")
-        networkMenu.Append(102, "&Save network to JSON", "")def onCreateNewNetClick(self, event):
-            """"""
-            self.networkname = wx.StaticText(self.panel, label="Network name :", pos=(20,60))
-            self.editname = wx.TextCtrl(self.panel, value="Enter network name here", pos=(150, 60), size=(140,-1))
-            net = b(self.editname)
-
+        networkMenu.Append(102, "&Save network to JSON", "")
+        
         # Save network syntax
         menuSave = networkMenu.Append(102, "&Save network to JSON", "")
         self.Bind(wx.EVT_MENU, self.OnSave, menuSave)
-
-        def OnSave(self, event):
-            if not self.filename:
-                self.OnSaveAs(event)
-                return
-            else:
-                self.SetTemporaryStatus("File saved")
-                fullname = os.path.join(self.dirname, self.filename)
-                b.saveJSON(fullname)
-
-        def OnSaveAs(self, event):
-            dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
-                                defaultFile=self.filename, style=wx.FD_SAVE)
-
-            if dlg.ShowModal() == wx.ID_OK:
-                self.filename = dlg.GetFilename()
-                self.dirname = dlg.GetDirectory()
-                fullname = os.path.join(self.dirname, self.filename)
-                self.DisplayFilenameOnStatusBar()
-                self.OnSave(event)
-            dlg.Destroy()
-
-
 
 
         #Load network syntax
         menuLoad = networkMenu.Append(103, "&Load network from JSON", "")
         self.Bind(wx.EVT_MENU, self.OnLoad, menuLoad)
-
-        def OnLoad(self,e):
-            dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
-                            defaultFile=self.filename, style=wx.FD_OPEN)
-
-            if dlg.ShowModal() == wx.ID_OK:
-                self.filename = dlg.GetFilename()
-                self.dirname = dlg.GetDirectory()
-                fullname = os.path.join(self.dirname, self.filename)
-                self.DisplayFilenameOnStatusBar()
-                b.loadJSON(fullname)
-            dlg.Destroy()
         
         # node menu        
         nodeMenu = wx.Menu()
@@ -95,10 +57,47 @@ class BayesianNetwork(wx.Frame):
         self.SetMenuBar(menuBar)
         self.Bind(wx.EVT_MENU,self.onCreateNewNetClick,createNewNet)
         self.Bind(wx.EVT_MENU,self.onCreateNewNodeClick,createNewNode)
+        
+        #file-json
+        self.filename = ""
+        self.dirname = ""
 
 
         
     #----------------------------------------------------------------------
+    def OnLoad(self,e):
+        dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
+                            defaultFile=self.filename, style=wx.FD_OPEN)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            self.filename = dlg.GetFilename()
+            self.dirname = dlg.GetDirectory()
+            fullname = os.path.join(self.dirname, self.filename)
+            self.DisplayFilenameOnStatusBar()
+            self.net.loadJSON(fullname)
+        dlg.Destroy()
+        
+    def OnSave(self, event):
+        if not self.filename:
+            self.OnSaveAs(event)
+            return
+        else:
+            #self.SetTemporaryStatus("File saved")
+            fullname = os.path.join(self.dirname, self.filename)
+            self.net.saveJSON(fullname)
+
+    def OnSaveAs(self, event):
+        dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
+                            defaultFile=self.filename, style=wx.FD_SAVE)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            self.filename = dlg.GetFilename()
+            self.dirname = dlg.GetDirectory()
+            fullname = os.path.join(self.dirname, self.filename)
+            #self.DisplayFilenameOnStatusBar()
+            self.OnSave(event)
+        dlg.Destroy()
+            
     def onExit(self, event):
         """"""
         self.Close()
@@ -106,27 +105,63 @@ class BayesianNetwork(wx.Frame):
     #----------------------------------------------------------------------
     def onCreateNewNetClick(self, event):
         """"""
-        self.networkname = wx.StaticText(self.panel, label="Network name :", pos=(20,60))
-        self.editname = wx.TextCtrl(self.panel, value="Enter network name here", pos=(150, 60), size=(140,-1))
-        net = b(editname)
-        
+        self.networknameLbl = wx.StaticText(self.panel, label="Network name :", pos=(20,60))
+        self.networkname = wx.TextCtrl(self.panel, value="Enter network name here", pos=(150, 60), size=(140,-1))
+        self.submitNet = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 150), size=(175, 28))
+        self.submitNet.Bind(wx.EVT_BUTTON, self.submitNetFunc)
+
     def onCreateNewNodeClick(self, event):
         """"""
         self.newnodeDisplayTxt = wx.StaticText(self.panel, label="This will create a new node for the Bayesian Network. Add the parent nodes followed by the child nodes", pos=(20,30))
         self.nodenameLbl = wx.StaticText(self.panel, label="Node name :", pos=(20,60))
-        self.nodename = wx.TextCtrl(self.panel, value="Enter node name here", pos=(150, 60), size=(140,-1))
-        self.parentDisplayTxt = wx.StaticText(self.panel, label="Enter the states of the above node in comma separated format (example: a1,a2,a3) ", pos=(20,90))     
+        self.nodename = wx.TextCtrl(self.panel, value="Enter node name here", pos=(160, 60), size=(140,-1))
+        self.statesDisplayTxt = wx.StaticText(self.panel, label="Enter the states of the above node in comma separated format (example: a1,a2,a3) ", pos=(20,90))     
         self.statenameLbl = wx.StaticText(self.panel, label="State names :", pos=(20,120))
-        self.statenames = wx.TextCtrl(self.panel, value="Enter state names here", pos=(150, 120), size=(140,-1))
-        self.parentDisplayTxt = wx.StaticText(self.panel, label="If the above defined node is a child node, add the parent nodes below", pos=(20,150))
-        self.parentLbl = wx.StaticText(self.panel, label="Parent node names (if any) :", pos=(20,180))
-        self.parent = wx.TextCtrl(self.panel, value="Enter parent node names here in comma separated format (example: A,C)", pos=(150, 180), size=(140,-1))
-        self.button1 = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 230), size=(175, 28))
+        self.statenames = wx.TextCtrl(self.panel, value="Enter state names here", pos=(160, 120), size=(140,-1))
+        self.parentDisplayTxt = wx.StaticText(self.panel, label="If the above defined node is a child node, add the parent nodes below in comma separated format (example: A,C) ", pos=(20,150))
+        self.parentLbl = wx.StaticText(self.panel, label="Parent node names (if any):", pos=(20,180))
+        self.parent = wx.TextCtrl(self.panel, value="Enter parent node names here", pos=(160, 180), size=(140,-1))
+        self.cptLbl = wx.StaticText(self.panel, label="Enter CPT", pos=(20,210))
+        self.cpt = wx.TextCtrl(self.panel, value="Enter CPT here", pos=(160, 210), size=(140,-1))        
+        self.button1 = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 240), size=(175, 28))
         self.button1.Bind(wx.EVT_BUTTON, self.button1Click)
         
-
+        
     def button1Click(self,event):
-        self.button1.Hide()        
+        nodename = self.nodename.GetValue()
+        print(nodename)
+        stateNames = self.statenames.GetValue().split(",")
+        print(stateNames)
+        parentname = self.parent.GetValue().split(",")
+        print(parentname)
+        newnode = b.Node(nodename,stateNames,parentname)
+        cptlist = self.cpt.GetValue().split(",")
+        print(cptlist)
+        newnode.setCPT(cptlist)
+        self.net.add(newnode)
+        print newnode
+        print self.net.getNode(nodename)
+        print(self.net.name)
+        #destroy the UI elements post submit
+        self.newnodeDisplayTxt.Destroy() 
+        self.nodenameLbl.Destroy()
+        self.nodename.Destroy()
+        self.statesDisplayTxt.Destroy()
+        self.statenameLbl.Destroy()
+        self.statenames.Destroy()
+        self.parentDisplayTxt.Destroy()
+        self.parentLbl.Destroy()
+        self.parent.Destroy()
+        self.button1.Destroy()
+        self.cpt.Destroy()
+        self.cptLbl.Destroy()
+        
+    def submitNetFunc(self,event):
+        print(self.networkname.GetValue())
+        self.net = b.BayesianNetwork(self.networkname.GetValue())
+        self.networknameLbl.Destroy()
+        self.networkname.Destroy()
+        self.submitNet.Destroy()
         #----------------------------------------------------------------------
 # Run the program
 if __name__ == "__main__":
