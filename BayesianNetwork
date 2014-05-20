@@ -73,7 +73,7 @@ class BayesianNetwork(wx.Frame):
             self.filename = dlg.GetFilename()
             self.dirname = dlg.GetDirectory()
             fullname = os.path.join(self.dirname, self.filename)
-            fullname = os.path.join(self.filename)
+            #fullname = os.path.join(self.filename)
             
             #self.DisplayFilenameOnStatusBar()
             self.net.loadJSON(fullname)
