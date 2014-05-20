@@ -32,7 +32,7 @@ class BayesianNetwork(wx.Frame):
             """"""
             self.networkname = wx.StaticText(self.panel, label="Network name :", pos=(20,60))
             self.editname = wx.TextCtrl(self.panel, value="Enter network name here", pos=(150, 60), size=(140,-1))
-            net = b(editname)
+            net = b(self.editname)
 
         # Save network syntax
         menuSave = networkMenu.Append(102, "&Save network to JSON", "")
