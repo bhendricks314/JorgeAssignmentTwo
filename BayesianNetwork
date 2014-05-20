@@ -28,7 +28,42 @@ class BayesianNetwork(wx.Frame):
         # network menu
         networkMenu = wx.Menu()
         createNewNet = networkMenu.Append(101, "&Create new network", "")
-        networkMenu.Append(102, "&Save network to JSON", "")
+        networkMenu.Append(102, "&Save network to JSON", "")def onCreateNewNetClick(self, event):
+            """"""
+            self.networkname = wx.StaticText(self.panel, label="Network name :", pos=(20,60))
+            self.editname = wx.TextCtrl(self.panel, value="Enter network name here", pos=(150, 60), size=(140,-1))
+            net = b(editname)
+
+        # Save network syntax
+        menuSave = networkMenu.Append(102, "&Save network to JSON", "")
+        self.Bind(wx.EVT_MENU, self.OnSave, menuSave)
+
+        def OnSave(self, event):
+            if not self.filename:
+                self.OnSaveAs(event)
+                return
+            else:
+                self.SetTemporaryStatus("File saved")
+                fullname = os.path.join(self.dirname, self.filename)
+                b.saveJSON(fullname)
+                #f.close()
+
+        def OnSaveAs(self, event):
+            dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
+                                defaultFile=self.filename, style=wx.FD_SAVE)
+
+            if dlg.ShowModal() == wx.ID_OK:
+                self.filename = dlg.GetFilename()
+                self.dirname = dlg.GetDirectory()
+                fullname = os.path.join(self.dirname, self.filename)
+                self.DisplayFilenameOnStatusBar()
+                self.OnSave(event)
+            dlg.Destroy()
+
+
+
+
+        #Load network syntax
         networkMenu.Append(103, "&Load network from JSON", "")
         
         # node menu        
