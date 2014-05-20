@@ -1,0 +1,80 @@
+import wx
+ 
+########################################################################
+class BayesianNetwork(wx.Frame):
+    """"""
+ 
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+        wx.Frame.__init__(self, None, title="Bayesian Network")
+ 
+        self.panel = wx.Panel(self, wx.ID_ANY)
+ 
+        # create the menubar
+        menuBar = wx.MenuBar()
+ 
+        # create the first menu (starting on left)
+        # network menu
+        networkMenu = wx.Menu()
+        createNewNet = networkMenu.Append(101, "&Create new network", "")
+        networkMenu.Append(102, "&Save network to JSON", "")
+        networkMenu.Append(103, "&Load network from JSON", "")
+        
+        # node menu        
+        nodeMenu = wx.Menu()
+        createNewNode = nodeMenu.Append(201, "&Add new node", "")
+        nodeMenu.Append(202, "&Edit existing node", "")
+        
+        # inference menu        
+        infMenu = wx.Menu()
+        infMenu.Append(301, "&Set Evidence", "")
+        infMenu.Append(302, "&Clear Evidence", "")
+ 
+        # add menus to menubar
+        menuBar.Append(networkMenu, "&Network")
+        menuBar.Append(nodeMenu, "&Node")
+        menuBar.Append(infMenu, "&Inference")
+        self.SetMenuBar(menuBar)
+        self.Bind(wx.EVT_MENU,self.onCreateNewNetClick,createNewNet)
+        self.Bind(wx.EVT_MENU,self.onCreateNewNodeClick,createNewNode)
+
+
+        
+    #----------------------------------------------------------------------
+    def onExit(self, event):
+        """"""
+        self.Close()
+        
+    #----------------------------------------------------------------------
+    def onCreateNewNetClick(self, event):
+        """"""
+        self.networkname = wx.StaticText(self.panel, label="Network name :", pos=(20,60))
+        self.editname = wx.TextCtrl(self.panel, value="Enter network name here", pos=(150, 60), size=(140,-1))
+
+    def onCreateNewNodeClick(self, event):
+        """"""
+        self.newnodeDisplayTxt = wx.StaticText(self.panel, label="This will create a new node for the Bayesian Network. Add the child nodes followed by the parent nodes", pos=(20,30))
+        self.nodenameLbl = wx.StaticText(self.panel, label="Node name :", pos=(20,60))
+        self.nodename = wx.TextCtrl(self.panel, value="Enter node name here", pos=(150, 60), size=(140,-1))
+        self.childDisplayTxt = wx.StaticText(self.panel, label="Enter the states of the above node in comma separated format (example: a1,a2,a3) ", pos=(20,90))     
+        self.statenameLbl = wx.StaticText(self.panel, label="State names :", pos=(20,120))
+        self.statenames = wx.TextCtrl(self.panel, value="Enter state names here", pos=(150, 120), size=(140,-1))
+        self.childrenDisplayTxt = wx.StaticText(self.panel, label="If the above defined node is a parent node, add the child nodes below", pos=(20,150))
+        self.childrenLbl = wx.StaticText(self.panel, label="Child node names (if any) :", pos=(20,180))
+        self.children = wx.TextCtrl(self.panel, value="Enter child node names here in comma separated format (example: A,C)", pos=(150, 180), size=(140,-1))
+        self.button1 = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 230), size=(175, 28))
+        self.button1.Bind(wx.EVT_BUTTON, self.button1Click)
+        # optional tooltip
+        self.button1.SetToolTip(wx.ToolTip("click to hide"))
+        
+    def button1Click(self,event):
+        self.button1.Hide()
+        self.SetTitle("Button1 clicked")
+        
+        #----------------------------------------------------------------------
+# Run the program
+if __name__ == "__main__":
+    app = wx.App(False)
+    frame = BayesianNetwork().Show()
+    app.MainLoop()
