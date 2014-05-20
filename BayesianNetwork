@@ -112,6 +112,7 @@ class BayesianNetwork(wx.Frame):
         self.button1 = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 230), size=(175, 28))
         self.button1.Bind(wx.EVT_BUTTON, self.button1Click)
         
+
     def button1Click(self,event):
         self.button1.Hide()        
         #----------------------------------------------------------------------
