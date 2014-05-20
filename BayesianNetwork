@@ -1,5 +1,15 @@
 import wx
- 
+import json
+import networkx as nx
+import matplotlib as mpl
+import os
+import datetime as dt
+import functools as ft
+import pdb
+import itertools as it
+import numpy as np
+import Bayesian as b
+
 ########################################################################
 class BayesianNetwork(wx.Frame):
     """"""
@@ -51,7 +61,8 @@ class BayesianNetwork(wx.Frame):
         """"""
         self.networkname = wx.StaticText(self.panel, label="Network name :", pos=(20,60))
         self.editname = wx.TextCtrl(self.panel, value="Enter network name here", pos=(150, 60), size=(140,-1))
-
+        net = b(editname)
+        
     def onCreateNewNodeClick(self, event):
         """"""
         self.newnodeDisplayTxt = wx.StaticText(self.panel, label="This will create a new node for the Bayesian Network. Add the parent nodes followed by the child nodes", pos=(20,30))
