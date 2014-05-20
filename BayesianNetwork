@@ -46,7 +46,6 @@ class BayesianNetwork(wx.Frame):
                 self.SetTemporaryStatus("File saved")
                 fullname = os.path.join(self.dirname, self.filename)
                 b.saveJSON(fullname)
-                #f.close()
 
         def OnSaveAs(self, event):
             dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
@@ -64,7 +63,20 @@ class BayesianNetwork(wx.Frame):
 
 
         #Load network syntax
-        networkMenu.Append(103, "&Load network from JSON", "")
+        menuLoad = networkMenu.Append(103, "&Load network from JSON", "")
+        self.Bind(wx.EVT_MENU, self.OnLoad, menuLoad)
+
+        def OnLoad(self,e):
+            dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
+                            defaultFile=self.filename, style=wx.FD_OPEN)
+
+            if dlg.ShowModal() == wx.ID_OK:
+                self.filename = dlg.GetFilename()
+                self.dirname = dlg.GetDirectory()
+                fullname = os.path.join(self.dirname, self.filename)
+                self.DisplayFilenameOnStatusBar()
+                b.loadJSON(fullname)
+            dlg.Destroy()
         
         # node menu        
         nodeMenu = wx.Menu()
