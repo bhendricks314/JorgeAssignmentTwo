@@ -107,7 +107,7 @@ class BayesianNetwork(wx.Frame):
             self.OnSave(event)
         dlg.Destroy()
             
-    def onExit(self, event):
+    def OnExit(self, event):
         """"""
         self.Close()
         
