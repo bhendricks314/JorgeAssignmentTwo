@@ -18,7 +18,7 @@ class BayesianNetwork(wx.Frame):
     def __init__(self):
         """Constructor"""
         wx.Frame.__init__(self, None, title="Bayesian Network")
-        self.net = b.BayesianNetwork("Jorge's sample net")
+        self.net = b.BayesianNetwork()
  
         self.panel = wx.Panel(self, wx.ID_ANY)
  
@@ -29,16 +29,21 @@ class BayesianNetwork(wx.Frame):
         # network menu
         networkMenu = wx.Menu()
         createNewNet = networkMenu.Append(101, "&Create new network", "")
-        networkMenu.Append(102, "&Save network to JSON", "")
         
         # Save network syntax
         menuSave = networkMenu.Append(102, "&Save network to JSON", "")
         self.Bind(wx.EVT_MENU, self.OnSave, menuSave)
-
-
+        menuSaveAs = networkMenu.Append(103, "&Save network to JSON as", "")
+        self.Bind(wx.EVT_MENU, self.OnSaveAs, menuSaveAs)        
+        
         #Load network syntax
-        menuLoad = networkMenu.Append(103, "&Load network from JSON", "")
+        menuLoad = networkMenu.Append(104, "&Load network from JSON", "")
         self.Bind(wx.EVT_MENU, self.OnLoad, menuLoad)
+        
+        #Exit the program
+        menuExit = networkMenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
+        self.Bind(wx.EVT_MENU, self.OnExit, menuExit)
+
         
         # node menu        
         nodeMenu = wx.Menu()
