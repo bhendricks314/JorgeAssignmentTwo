@@ -40,6 +40,10 @@ class BayesianNetwork(wx.Frame):
         menuLoad = networkMenu.Append(104, "&Load network from JSON", "")
         self.Bind(wx.EVT_MENU, self.OnLoad, menuLoad)
         
+        #Draw network syntax
+        menuDraw = networkMenu.Append(401, "&Draw Network", "")
+        self.Bind(wx.EVT_MENU, self.OnDrawNetwork, menuDraw)        
+        
         #Exit the program
         menuExit = networkMenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
         self.Bind(wx.EVT_MENU, self.OnExit, menuExit)
@@ -54,11 +58,16 @@ class BayesianNetwork(wx.Frame):
         infMenu = wx.Menu()
         infMenu.Append(301, "&Set Evidence", "")
         infMenu.Append(302, "&Clear Evidence", "")
+        
+        # drawing menu        
+        drawMenu = wx.Menu()
+        drawMenu.Append(401,  "&Draw Network", "")
  
         # add menus to menubar
         menuBar.Append(networkMenu, "&Network")
         menuBar.Append(nodeMenu, "&Node")
         menuBar.Append(infMenu, "&Inference")
+        menuBar.Append(drawMenu, "&Draw Network")
         self.SetMenuBar(menuBar)
         self.Bind(wx.EVT_MENU,self.onCreateNewNetClick,createNewNet)
         self.Bind(wx.EVT_MENU,self.onCreateNewNodeClick,createNewNode)
@@ -135,6 +144,11 @@ class BayesianNetwork(wx.Frame):
         self.button1 = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 240), size=(175, 28))
         self.button1.Bind(wx.EVT_BUTTON, self.button1Click)
         
+    def OnDrawNetwork(self, event):
+        DG = self.net.drawGraph()
+        #nx.draw(DG)
+        #mpl.show()
+
         
     def button1Click(self,event):
         nodename = self.nodename.GetValue()
