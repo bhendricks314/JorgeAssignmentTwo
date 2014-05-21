@@ -1,3 +1,4 @@
+
 import wx
 import json
 import networkx as nx
@@ -48,6 +49,7 @@ class BayesianNetwork(wx.Frame):
         menuExit = networkMenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
         self.Bind(wx.EVT_MENU, self.OnExit, menuExit)
 
+
         
         # node menu        
         nodeMenu = wx.Menu()
@@ -77,6 +79,8 @@ class BayesianNetwork(wx.Frame):
         self.dirname = ""
 
 
+
+
         
     #----------------------------------------------------------------------
     def OnLoad(self,e):
@@ -88,11 +92,13 @@ class BayesianNetwork(wx.Frame):
             self.dirname = dlg.GetDirectory()
             fullname = os.path.join(self.dirname, self.filename)
             #fullname = os.path.join(self.filename)
-            
+            print "fullname"            
+            print fullname
             #self.DisplayFilenameOnStatusBar()
             self.net.loadJSON(fullname)
+                
         dlg.Destroy()
-        #print fullname
+        
             
         
     def OnSave(self, event):
@@ -104,9 +110,11 @@ class BayesianNetwork(wx.Frame):
             fullname = os.path.join(self.dirname, self.filename)
             self.net.saveJSON(fullname)
 
+
     def OnSaveAs(self, event):
         dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
                             defaultFile=self.filename, style=wx.FD_SAVE)
+
 
         if dlg.ShowModal() == wx.ID_OK:
             self.filename = dlg.GetFilename()
@@ -127,6 +135,7 @@ class BayesianNetwork(wx.Frame):
         self.networkname = wx.TextCtrl(self.panel, value="Enter network name here", pos=(150, 60), size=(140,-1))
         self.submitNet = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 150), size=(175, 28))
         self.submitNet.Bind(wx.EVT_BUTTON, self.submitNetFunc)
+
 
     def onCreateNewNodeClick(self, event):
         """"""
@@ -149,13 +158,17 @@ class BayesianNetwork(wx.Frame):
         #nx.draw(DG)
         #mpl.show()
 
+
         
     def button1Click(self,event):
         nodename = self.nodename.GetValue()
         print(nodename)
         stateNames = self.statenames.GetValue().split(",")
         print(stateNames)
-        parentname = self.parent.GetValue().split(",")
+        if len(self.parent.GetValue())==0:
+            parentname = []
+        else:
+            parentname = self.parent.GetValue().split(",")
         print(parentname)
         newnode = b.Node(nodename,stateNames,parentname)
         cptlist = self.cpt.GetValue().split(",")
