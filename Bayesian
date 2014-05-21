@@ -2,7 +2,8 @@ import numpy as np
 #import simplejson
 import json
 import pdb
-import itertools
+import 
+import networkx as nx
 
 #Base class for all nodes in the Bayesian Network
 class Node:
@@ -196,3 +197,13 @@ def doInference(potentials):
     joint = joint/np.sum(joint)
     
     print("{} -> {}".format(varsString, joint))    
+
+def drawGraph(network):
+    DG=nx.DiGraph()
+    for i in network.nodes:
+        DG.add_node(i.name)
+        if(i.parents != []):
+            for j in i.parents:
+                DG.add_weighted_edges_from([(j.name, i.name, 1)])
+    print(DG.nodes())
+    print(DG.edges()
