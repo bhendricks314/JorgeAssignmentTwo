@@ -6,9 +6,11 @@ import itertools
 import networkx as nx
 import matplotlib.pyplot as plt
 
+
 #Base class for all nodes in the Bayesian Network
 class Node:
     'Common base class for all nodes'
+
 
     def __init__(self, name, state, parents=[], children=[]):
         if isinstance(parents, str): parents = parents.split()
@@ -55,6 +57,7 @@ class Node:
         #t['parents'] = [x for x in t['parents']]
         return t
 
+
     #display important attributes about the node         
     def displayNode(self):
         print ("Node Name : ", self.name)
@@ -67,6 +70,7 @@ class Node:
     #set the CPT of a node     
     def setCPT(self, cpt):
         self.cpt = cpt
+
 
 #class that holds the nodes to form the bayesian network         
 class BayesianNetwork:
@@ -138,11 +142,10 @@ class BayesianNetwork:
         with open(filepath, 'w') as outfile:
              json.dump(self.jsonDefault(self), outfile, indent = 4, sort_keys=True)
 
+
 #     Come back to figuring out how to remove a node
 #        def removeNode(self, name):
 #         self.nodes.remove(name)
-
-
 
     
     def loadJSON(self, filepath):
@@ -160,6 +163,7 @@ class BayesianNetwork:
         new_object.variables = t['variables']
         # for each node, set up the node name, add state, cpt, then return the new BayesianNetwork object
         for i in range(0, len(t['nodes'])):
+            print t['nodes'][i]
             t['nodes'][i]['name'] = t['nodes'][i]['name'].encode('ascii')
             new_object.addj(t['nodes'][i]['name'])
             new_object.nodes[i]=Node(t['nodes'][i]['name'], t['nodes'][i]['state'])
@@ -172,9 +176,11 @@ class BayesianNetwork:
             DG.add_node(i.name)
             if(i.parents != []):
                 for j in i.parents:
-                    DG.add_weighted_edges_from([(j.name, i.name, 1)])
+                    DG.add_weighted_edges_from([(j, i.name, 1)])
         nx.draw(DG)
         plt.show()
+
+
 
 
 class TablePotential:
@@ -188,8 +194,8 @@ class TablePotential:
             self.table = np.array(table)
         self.dim = dim
 
-#B_eq_b3 = TablePotential('b', 3, 2)
 
+#B_eq_b3 = TablePotential('b', 3, 2)
 def doInference(potentials):
     #have to construct teh string numpy wants
     dims = [i.dim for i in potentials]
