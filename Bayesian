@@ -197,12 +197,14 @@ class TablePotential:
 
 #B_eq_b3 = TablePotential('b', 3, 2)
 def doInference(potentials):
-    #have to construct teh string numpy wants
+    #have to construct the string numpy wants
     dims = [i.dim for i in potentials]
     pots = [i.table for i in potentials]
     einsumFormat = ",".join(dims)
+    print(einsumFormat)
     #set makes it unique, list makes it sortable
     varbs = sorted(list(set("".join(dims))))
+    print(varbs)
     
     for v in varbs:
         vMarginal = np.einsum(einsumFormat+"->"+v,*pots)
