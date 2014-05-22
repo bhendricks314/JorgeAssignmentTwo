@@ -1,4 +1,3 @@
-
 import wx
 import json
 import networkx as nx
@@ -154,7 +153,7 @@ class BayesianNetwork(wx.Frame):
         self.button1.Bind(wx.EVT_BUTTON, self.button1Click)
         
     def OnDrawNetwork(self, event):
-        DG = self.net.drawGraph()
+        self.net.drawGraph()
         #nx.draw(DG)
         #mpl.show()
 
