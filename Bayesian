@@ -12,7 +12,7 @@ class Node:
     'Common base class for all nodes'
 
 
-    def __init__(self, name, state, parents=[], children=[]):
+    def __init__(self, name=None, state, parents=[], children=[]):
         if isinstance(parents, str): parents = parents.split()
         self.name = name
         self.parents = parents
@@ -148,27 +148,42 @@ class BayesianNetwork:
 #         self.nodes.remove(name)
 
     
-    def loadJSON(self, filepath):
+    def loadJSON(self, inFile):
+    #def loadJSON(self, filepath):
         ''' loadJSON(filepath)
             This method loads a JSON file and turns the JSON data into a BayesianNetwork with nodes.
             Example: net = loadJSON('net.json')
         '''
         # Opens the json file and reads the data to json_data
-        json_data = open(filepath).read()
+    #    json_data = open(filepath).read()
         # First create a new BayesianNetwork object called new_object
-        new_object = BayesianNetwork()
-        t = json.loads(json_data)['network']
+        
+    #    t = json.loads(json_data)['network']
         # set the BayesianNetwork name, and all variables of the Network
-        new_object.name = t['name'].encode('ascii')
-        new_object.variables = t['variables']
+    #    new_object = BayesianNetwork(t['name'].encode('ascii'))        
+        #new_object.variables = t['variables']
         # for each node, set up the node name, add state, cpt, then return the new BayesianNetwork object
-        for i in range(0, len(t['nodes'])):
-            print t['nodes'][i]
-            t['nodes'][i]['name'] = t['nodes'][i]['name'].encode('ascii')
-            new_object.addj(t['nodes'][i]['name'])
-            new_object.nodes[i]=Node(t['nodes'][i]['name'], t['nodes'][i]['state'])
-            new_object.nodes[i].setCPT(t['nodes'][i]['cpt'])
-        return new_object
+    #    for i in range(0, len(t['nodes'])):
+    #        print t['nodes'][i]
+    #        t['nodes'][i]['name'] = t['nodes'][i]['name'].encode('ascii')
+    #        new_object.addj(t['nodes'][i]['name'])
+    #        new_object.nodes[i]=Node(t['nodes'][i]['name'], t['nodes'][i]['state'])
+    #        new_object.nodes[i].setCPT(t['nodes'][i]['cpt'])
+    #    return new_object
+    
+        import json as js
+        with open(inFile, 'r') as inFile:
+            obj = js.load(inFile)[u'network']
+            inFile.close()
+        self.name = obj[u'name']
+        self.temp = obj[u'nodes'] 
+        for i in self.temp:
+            j = Node()
+            j.name = i[u'name']
+            j.state = i[u'state']
+            j.parents = i[u'parents']
+            j.CPT = i[u'cpt']
+            self.add(j)
     
     def drawGraph(self):
         DG=nx.DiGraph()
