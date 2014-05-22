@@ -40,6 +40,9 @@ class BayesianNetwork(wx.Frame):
         menuLoad = networkMenu.Append(104, "&Load network from JSON", "")
         self.Bind(wx.EVT_MENU, self.OnLoad, menuLoad)
         
+        menuDoInf = networkMenu.Append(301, "&Do Inference", "")
+        self.Bind(wx.EVT_MENU, self.OnDoInference, menuDoInf)         
+        
         #Draw network syntax
         menuDraw = networkMenu.Append(401, "&Draw Network", "")
         self.Bind(wx.EVT_MENU, self.OnDrawNetwork, menuDraw)        
@@ -57,8 +60,9 @@ class BayesianNetwork(wx.Frame):
         
         # inference menu        
         infMenu = wx.Menu()
-        infMenu.Append(301, "&Set Evidence", "")
-        infMenu.Append(302, "&Clear Evidence", "")
+        infMenu.Append(301, "&Do Inference", "")
+        infMenu.Append(302, "&Set Evidence", "")
+        infMenu.Append(303, "&Clear Evidence", "")
         
         # drawing menu        
         drawMenu = wx.Menu()
@@ -157,7 +161,27 @@ class BayesianNetwork(wx.Frame):
         #nx.draw(DG)
         #mpl.show()
 
-
+    def OnDoInference(self, event):
+        cpts = []        
+        for n in self.net.nodes: 
+            dims = []
+            if(n.parents == []):
+                i = b.TablePotential(n.name, n.cpt)            
+                cpts.append(i)
+            else:
+                for p in n.parents:
+                    dims.append(p)
+                
+                dim = ",".join(dims)
+                print(dim)                
+                
+                i = b.TablePotential(dim, n.cpt)            
+                cpts.append(i)
+        b.doInference(cpts)
+        
+    #def onSetEvidence:
+        
+    #def onClearEvidence:
         
     def button1Click(self,event):
         nodename = self.nodename.GetValue()
@@ -177,6 +201,7 @@ class BayesianNetwork(wx.Frame):
         print newnode
         print self.net.getNode(nodename)
         print(self.net.name)
+
         #destroy the UI elements post submit
         self.newnodeDisplayTxt.Destroy() 
         self.nodenameLbl.Destroy()
