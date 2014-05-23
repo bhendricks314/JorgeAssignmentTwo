@@ -176,13 +176,13 @@ class BayesianNetwork:
             obj = js.load(inFile)[u'network']
             inFile.close()
         self.name = obj[u'name']
-        self.temp = obj[u'nodes'] 
+        self.temp = obj[u'nodes']
         for i in self.temp:
             j = Node()
             j.name = i[u'name']
             j.state = i[u'state']
             j.parents = i[u'parents']
-            j.CPT = i[u'cpt']
+            j.cpt = i[u'cpt']
             self.add(j)
     
     def drawGraph(self):
