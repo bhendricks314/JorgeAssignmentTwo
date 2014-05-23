@@ -1,0 +1,249 @@
+import numpy as np
+#import simplejson
+import json
+import pdb
+import itertools
+import networkx as nx
+import matplotlib.pyplot as plt
+
+
+
+
+#Base class for all nodes in the Bayesian Network
+class Node:
+    'Common base class for all nodes'
+
+
+
+
+    def __init__(self, name=None, state=[], parents=[], children=[]):
+        if isinstance(parents, str): parents = parents.split()
+        self.name = name
+        self.parents = parents
+        self.state = state
+        self.children = children
+        self.cpt = []
+    
+    #change the name of the node
+    def changeName(self, newname):   
+        self.name = newname
+        'replace name in network'
+    
+    #display the name of the node   
+    def displayName(self):
+        print ("Node Name = %s" % self.name)
+    
+    #replace parent to the node    
+    def replaceParent(self, newparent):
+        self.name = newparent
+        'replace parent name in network'
+    
+    #add parent to the node 
+    def addParent(self, nodename):
+        self.parents.append(nodename)
+    
+    #remove parent from the node    
+    def removeParent(self, badparent):
+        self.parents.remove(badparent)
+        'add update to network'
+    
+    #display the parent(s) of a node
+    def displayParent(self):
+        l=[]
+        for p in self.parents:
+            l.append(p.name)
+        print ("Parents: " + str(l))   
+    
+    #set the node for json format ready
+    def readyForJSON(self):
+        t = self.__dict__.copy()
+        #t['net'] = t['net'].name
+        #t['parents'] = [x for x in t['parents']]
+        print t        
+        return t
+
+
+
+
+    #display important attributes about the node         
+    def displayNode(self):
+        print ("Node Name : ", self.name)
+        l=[]
+        for p in self.parents:
+            l.append(p.name)
+        print ("Parents: " + str(l)) 
+        print("Distribution Table: ", self.cpt)
+    
+    #set the CPT of a node     
+    def setCPT(self, cpt):
+        self.cpt = cpt
+
+
+
+
+#class that holds the nodes to form the bayesian network         
+class BayesianNetwork:
+    'Framework for conditional relationships'
+    def __init__(self, name="NoName", nodes=None):
+        self.name = name
+        self.variables=[]
+        self.nodes = []
+        if(nodes == None):
+            self.nodes=[]
+        else:
+            for node in nodes:
+                self.add = node
+            self.variables = dict([(n.name, n) for n in nodes])
+            self.root = [n for n in nodes if not n.parents]
+    
+    #add a node to the bayesian network
+    def add(self, node):
+        self.nodes.append(node)
+        self.variables.append(node.name)
+    
+    #an add node method for load json object    
+    def addj(self, node):
+        '''
+        an add node method for load json object, not used by user
+        
+        '''
+        self.nodes.append(node)
+        #self.variables.append(node)
+        
+        
+    #returns the node named var from the bayesian network
+    def getNode(self, var):
+        for n in self.nodes:
+            if n.name == var:
+                return n
+    
+    #shows key information about the bayesian network including each node, its parents and its CPT        
+    def viewNetwork(self):
+        print ("\nBayesian Network: " + self.name)
+        for n in self.nodes:
+            n.displayNode()
+        
+    #JSON encoding, use by saveJSON method
+    def jsonDefault(self, o):
+        ''' Use by BayesianNetwork.saveJSON(filepath)
+            The jsonDefault method takes care of the JSON encoding for a Bayesian Network.
+            The method turns the BayesNetwork object into dict and with all network values.
+            The Bayesian Network will be saved to the parameter "o".
+            The saveJSON method will call the jsonDefault method.
+        '''
+        t = o.__dict__.copy()
+        temp = []
+        # Gets the nodes ready for JSON
+        for x in t['nodes']:
+            temp.append(x.readyForJSON())
+        t['nodes'] = temp
+        jsonObject = {}
+        jsonObject['network'] = t
+        return jsonObject
+    
+    #save the network to json file
+    def saveJSON(self, filepath):
+        ''' BayesianNetwork.saveJSON(filepath) is used to call a BayesianNetwork, and save it in JSON format.
+            json modules is needed
+            BayesianNetwork.jsonDefault is used
+           Example: bn.saveJSON('net.json')
+        '''
+        with open(filepath, 'w') as outfile:
+             json.dumps(self.jsonDefault(self), outfile, indent = 4, sort_keys=True)
+             outfile.close()
+#     Come back to figuring out how to remove a node
+#        def removeNode(self, name):
+#         self.nodes.remove(name)
+
+    def loadJSON(self, inFile):
+    #def loadJSON(self, filepath):
+        ''' loadJSON(filepath)
+            This method loads a JSON file and turns the JSON data into a BayesianNetwork with nodes.
+            Example: net = loadJSON('net.json')
+        '''
+        # Opens the json file and reads the data to json_data
+    #    json_data = open(filepath).read()
+        # First create a new BayesianNetwork object called new_object
+        
+    #    t = json.loads(json_data)['network']
+        # set the BayesianNetwork name, and all variables of the Network
+    #    new_object = BayesianNetwork(t['name'].encode('ascii'))        
+        #new_object.variables = t['variables']
+        # for each node, set up the node name, add state, cpt, then return the new BayesianNetwork object
+    #    for i in range(0, len(t['nodes'])):
+    #        print t['nodes'][i]
+    #        t['nodes'][i]['name'] = t['nodes'][i]['name'].encode('ascii')
+    #        new_object.addj(t['nodes'][i]['name'])
+    #        new_object.nodes[i]=Node(t['nodes'][i]['name'], t['nodes'][i]['state'])
+    #        new_object.nodes[i].setCPT(t['nodes'][i]['cpt'])
+    #    return new_object
+    
+        import json as js
+        with open(inFile, 'r') as inFile:
+            obj = js.load(inFile)[u'network']
+            inFile.close()
+        self.name = obj[u'name']
+        self.temp = obj[u'nodes']
+        for i in self.temp:
+            j = Node()
+            j.name = i[u'name']
+            j.state = i[u'state']
+            j.parents = i[u'parents']
+            j.cpt = i[u'cpt']
+            #print j.cpt
+            self.add(j)
+    
+    
+    def drawGraph(self):
+        DG=nx.DiGraph()
+        for i in self.nodes:
+            DG.add_node(i.name)
+            if(i.parents != []):
+                for j in i.parents:
+                    DG.add_weighted_edges_from([(j, i.name, 1)])
+        nx.draw(DG)
+        plt.show()
+
+
+
+class TablePotential:
+    #rep the numpy array
+    def __init__(self, dim, table, index=None):
+        #dim is the string I need aka the starting cpt
+        if(index != None):
+            self.table = np.zeros(table)
+            self.table[index] = 1
+        else:
+            self.table = np.array(table)
+        self.dim = dim
+
+
+
+
+#B_eq_b3 = TablePotential('b', 3, 2)
+def doInference(potentials):
+    #have to construct the string numpy wants
+    dims = [i.dim for i in potentials]
+    for i in potentials:
+        print "i"        
+        print i.table
+    pots = [i.table for i in potentials]
+    print pots
+    einsumFormat = ",".join(dims)
+    #set makes it unique, list makes it sortable
+    varbs = sorted(list(set("".join(dims))))
+    #print(varbs)
+    
+    for v in varbs:
+        #print pots
+        #print(einsumFormat+'->'+v)    
+        vMarginal = np.einsum(einsumFormat+"->"+v,*pots)
+        vMarginal = vMarginal / np.sum(vMarginal)
+        print("{} -> {}".format(v,vMarginal))
+        
+    varsString = "".join(varbs)
+    joint = np.einsum(einsumFormat + '->'+varsString, *pots)
+    #normalize
+    joint = joint/np.sum(joint)
+        
+    print("{} -> {}".format(varsString, joint))  
