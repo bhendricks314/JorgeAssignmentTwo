@@ -166,15 +166,15 @@ class BayesianNetwork(wx.Frame):
             dims = []
             if(n.parents == []):
                 i = b.TablePotential(n.name, n.cpt)
-                print(n.cpt)
+                #print(n.cpt)
                 cpts.append(i)
             else:
-                for p in n.parents:
+                for p in reversed(n.parents):
                     dims.append(p)
                 dims.append(n.name)
                 
                 dim = "".join(dims)
-                print(str("Parents: " + dim))                
+                #print(str("Parents: " + dim))                
                 
                 i = b.TablePotential(dim, n.cpt)            
                 cpts.append(i)
