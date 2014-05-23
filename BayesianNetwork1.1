@@ -173,8 +173,9 @@ class BayesianNetwork(wx.Frame):
         for n in self.net.nodes: 
             dims = []
             if(n.parents == []):
-                i = b.TablePotential(n.name, n.cpt)
+                i = b.TablePotential(n.name, np.array(n.cpt))
                 #print "i"                
+                #print i.dim                
                 #print i.table
                 self.cpts.append(i)
             else:
@@ -183,8 +184,9 @@ class BayesianNetwork(wx.Frame):
                 dims.append(n.name)
                 dim = "".join(dims)
                 #print(str("Parents: " + dim) 
-                i = b.TablePotential(dim, n.cpt)
-                #print "i"                
+                i = b.TablePotential(dim, np.array(n.cpt))
+                #print "i"
+                #print i.dim                
                 #print i.table
                 self.cpts.append(i)
             #print i.dim
@@ -223,7 +225,7 @@ class BayesianNetwork(wx.Frame):
         self.evNodeNameLbl.Destroy()
         self.evNodeName.Destroy()
         self.evidenceLblTxt.Destroy()
-        self.evidenceIndex.Destroy()
+        self.evidenceState.Destroy()
         self.button2.Destroy()
         
 
@@ -255,7 +257,7 @@ class BayesianNetwork(wx.Frame):
         #print "parent name"
         #print(parentname)
         newnode = b.Node(nodename,stateNames,parentname)
-        cptlist = np.array(eval(self.cpt.GetValue()))
+        cptlist = eval(self.cpt.GetValue())
         #print "cptlist"        
         #print cptlist
         newnode.setCPT(cptlist)
