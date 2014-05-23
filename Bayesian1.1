@@ -59,7 +59,7 @@ class Node:
         t = self.__dict__.copy()
         #t['net'] = t['net'].name
         #t['parents'] = [x for x in t['parents']]
-        print t        
+        #print t        
         return t
 
 
@@ -135,10 +135,12 @@ class BayesianNetwork:
         temp = []
         # Gets the nodes ready for JSON
         for x in t['nodes']:
+            x.cpt = x.cpt
             temp.append(x.readyForJSON())
         t['nodes'] = temp
         jsonObject = {}
         jsonObject['network'] = t
+        #print jsonObject
         return jsonObject
     
     #save the network to json file
@@ -149,7 +151,8 @@ class BayesianNetwork:
            Example: bn.saveJSON('net.json')
         '''
         with open(filepath, 'w') as outfile:
-             json.dumps(self.jsonDefault(self), outfile, indent = 4, sort_keys=True)
+             jsonNet=json.dumps(self.jsonDefault(self), outfile, indent = 4, sort_keys=True)
+             outfile.write(jsonNet)
              outfile.close()
 #     Come back to figuring out how to remove a node
 #        def removeNode(self, name):
@@ -223,12 +226,13 @@ class TablePotential:
 #B_eq_b3 = TablePotential('b', 3, 2)
 def doInference(potentials):
     #have to construct the string numpy wants
+    #print potentials
     dims = [i.dim for i in potentials]
-    for i in potentials:
-        print "i"        
-        print i.table
+    #for i in potentials:
+        #print "i"        
+        #print i.table
     pots = [i.table for i in potentials]
-    print pots
+    #print pots
     einsumFormat = ",".join(dims)
     #set makes it unique, list makes it sortable
     varbs = sorted(list(set("".join(dims))))
