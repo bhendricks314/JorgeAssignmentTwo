@@ -1,0 +1,295 @@
+import wx
+import json
+import networkx as nx
+import matplotlib as mpl
+import os
+import datetime as dt
+import functools as ft
+import pdb
+import itertools as it
+import numpy as np
+import Bayesian as b
+ 
+########################################################################
+class BayesianNetwork(wx.Frame):
+    """"""
+    
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+        wx.Frame.__init__(self, None, title="Bayesian Network", size=(800,400))
+        self.net = b.BayesianNetwork()
+ 
+        self.panel = wx.Panel(self, wx.ID_ANY)
+ 
+        # create the menubar
+        menuBar = wx.MenuBar()
+ 
+        # create the first menu (starting on left)
+        # network menu
+        networkMenu = wx.Menu()
+        createNewNet = networkMenu.Append(101, "&Create new network", "")
+        self.Bind(wx.EVT_MENU,self.onCreateNewNetClick,createNewNet)
+        
+        # Save network syntax
+        menuSave = networkMenu.Append(102, "&Save network to JSON", "")
+        self.Bind(wx.EVT_MENU, self.OnSave, menuSave)
+        menuSaveAs = networkMenu.Append(103, "&Save network to JSON as", "")
+        self.Bind(wx.EVT_MENU, self.OnSaveAs, menuSaveAs)        
+        
+        #Load network syntax
+        menuLoad = networkMenu.Append(104, "&Load network from JSON", "")
+        self.Bind(wx.EVT_MENU, self.OnLoad, menuLoad)
+        
+        menuDoInf = networkMenu.Append(301, "&Do Inference", "")
+        self.Bind(wx.EVT_MENU, self.OnDoInference, menuDoInf)         
+        
+        #Draw network syntax
+        menuDraw = networkMenu.Append(401, "&Draw Network", "")
+        self.Bind(wx.EVT_MENU, self.OnDrawNetwork, menuDraw)        
+        
+        #Exit the program
+        menuExit = networkMenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
+        self.Bind(wx.EVT_MENU, self.OnExit, menuExit)
+
+        
+        # node menu        
+        nodeMenu = wx.Menu()
+        createNewNode = nodeMenu.Append(201, "&Add new node", "")
+        self.Bind(wx.EVT_MENU,self.onCreateNewNodeClick,createNewNode)
+
+        
+        nodeMenu.Append(202, "&Edit existing node", "")
+        
+        # inference menu        
+        infMenu = wx.Menu()
+        infMenu.Append(301, "&Do Inference", "")
+        
+        #set evidence
+        infSetEvidence = infMenu.Append(302, "&Set Evidence", "")
+        self.Bind(wx.EVT_MENU, self.OnSetEvidence, infSetEvidence)        
+        
+        #clear evidence
+        infClearEvidence = infMenu.Append(303, "&Clear Evidence", "")
+        self.Bind(wx.EVT_MENU, self.OnClearEvidence, infClearEvidence)
+        
+        # drawing menu        
+        drawMenu = wx.Menu()
+        drawMenu.Append(401,  "&Draw Network", "")
+ 
+        # add menus to menubar
+        menuBar.Append(networkMenu, "&Network")
+        menuBar.Append(nodeMenu, "&Node")
+        menuBar.Append(infMenu, "&Inference")
+        menuBar.Append(drawMenu, "&Draw Network")
+        self.SetMenuBar(menuBar)
+        
+        
+        
+        #file-json
+        self.filename = ""
+        self.dirname = ""
+
+        #cpts array used to calculate joint probability distributions
+        self.cpts = []
+        
+        #evidence array used to store evidence node state information
+        self.evidence = []
+
+        
+    #----------------------------------------------------------------------
+    def OnLoad(self,e):
+        dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
+                            defaultFile=self.filename, style=wx.FD_OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.filename = dlg.GetFilename()
+            self.dirname = dlg.GetDirectory()
+            fullname = os.path.join(self.dirname, self.filename)
+            #self.DisplayFilenameOnStatusBar()
+            self.net.loadJSON(fullname)
+            self.createCPTs()
+        dlg.Destroy()
+        
+            
+        
+    def OnSave(self, event):
+        if not self.filename:
+            self.OnSaveAs(event)
+            return
+        else:
+            #self.SetTemporaryStatus("File saved")
+            fullname = os.path.join(self.dirname, self.filename)
+            self.net.saveJSON(fullname)
+
+
+
+
+    def OnSaveAs(self, event):
+        dlg = wx.FileDialog(self, "Choose a file", defaultDir=self.dirname,
+                            defaultFile=self.filename, style=wx.FD_SAVE)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.filename = dlg.GetFilename()
+            self.dirname = dlg.GetDirectory()
+            fullname = os.path.join(self.dirname, self.filename)
+            #self.DisplayFilenameOnStatusBar()
+            self.OnSave(event)
+        dlg.Destroy()
+            
+    def OnExit(self, event):
+        """"""
+        self.Close()
+        
+    #----------------------------------------------------------------------
+    def onCreateNewNetClick(self, event):
+        """"""
+        self.networknameLbl = wx.StaticText(self.panel, label="Network name :", pos=(20,60))
+        self.networkname = wx.TextCtrl(self.panel, value="Enter network name here", pos=(150, 60), size=(140,-1))
+        self.submitNet = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 150), size=(175, 28))
+        self.submitNet.Bind(wx.EVT_BUTTON, self.submitNetFunc)
+
+
+
+
+    def onCreateNewNodeClick(self, event):
+        """"""
+        self.newnodeDisplayTxt = wx.StaticText(self.panel, label="This will create a new node for the Bayesian Network. Add the parent nodes followed by the child nodes", pos=(20,30))
+        self.nodenameLbl = wx.StaticText(self.panel, label="Node name :", pos=(20,60))
+        self.nodename = wx.TextCtrl(self.panel, value="Enter node name here", pos=(200, 60), size=(140,-1))
+        self.statesDisplayTxt = wx.StaticText(self.panel, label="Enter the states of the above node in comma separated format (example: a1,a2,a3) ", pos=(20,90))     
+        self.statenameLbl = wx.StaticText(self.panel, label="State names :", pos=(20,120))
+        self.statenames = wx.TextCtrl(self.panel, value="Enter state names here", pos=(200, 120), size=(140,-1))
+        self.parentDisplayTxt = wx.StaticText(self.panel, label="If the above defined node is a child node, add the parent nodes below in comma separated format (example: A,C) ", pos=(20,150))
+        self.parentLbl = wx.StaticText(self.panel, label="Parent node names (if any):", pos=(20,180))
+        self.parent = wx.TextCtrl(self.panel, value="Enter parent node names here", pos=(200, 180), size=(140,-1))
+        self.cptLbl = wx.StaticText(self.panel, label="Enter CPT", pos=(20,210))
+        self.cpt = wx.TextCtrl(self.panel, value="Enter CPT here", pos=(200, 210), size=(140,-1))
+        self.button1 = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 240), size=(175, 28))
+        self.button1.Bind(wx.EVT_BUTTON, self.button1Click)
+        
+        
+   
+    def createCPTs (self):
+        self.cpts = []        
+        for n in self.net.nodes: 
+            dims = []
+            if(n.parents == []):
+                i = b.TablePotential(n.name, n.cpt)
+                #print "i"                
+                #print i.table
+                self.cpts.append(i)
+            else:
+                for p in reversed(n.parents):
+                    dims.append(p)
+                dims.append(n.name)
+                dim = "".join(dims)
+                #print(str("Parents: " + dim) 
+                i = b.TablePotential(dim, n.cpt)
+                #print "i"                
+                #print i.table
+                self.cpts.append(i)
+            #print i.dim
+            #print i.table
+        #print(self.cpts)
+        #for i in self.cpts:
+        #    print i.table
+
+     
+    def OnDrawNetwork(self, event):
+        self.net.drawGraph()
+        #nx.draw(DG)
+        #mpl.show()
+
+    def OnSetEvidence(self, event):
+        self.setEvidenceDisplayTxt = wx.StaticText(self.panel, label = "This will change conditional probability distributions to reaflect known node state")
+        self.evNodeNameLbl = wx.StaticText(self.panel, label="Node name :", pos=(20,60))
+        self.evNodeName = wx.TextCtrl(self.panel, value="Enter node name here", pos=(200, 60), size=(140,-1))
+        self.evidenceLblTxt = wx.StaticText(self.panel, label="known state", pos=(20, 120))
+        self.evidenceState = wx.TextCtrl(self.panel, value="Enter known state here", pos=(200, 120), size=(140, -1))
+        self.button2 = wx.Button(self.panel, id=-1, label='Submit',pos=(20, 240), size=(175, 28))
+        self.button2.Bind(wx.EVT_BUTTON, self.SetEvidence)
+                
+    def SetEvidence(self, event):
+        #print self.evNodeName.GetValue()
+        for n in self.cpts:
+            if n.dim[len(n.dim)-1] == self.evNodeName.GetValue():
+                table = 0
+                index = 0
+                for j in self.net.nodes:
+                    if j.name == self.evNodeName.GetValue():
+                        table = len(j.state)
+                        index = j.state.index(self.evidenceState.GetValue())
+                self.evidence.append(b.TablePotential(self.evNodeName.GetValue(), table, index))
+        self.setEvidenceDisplayTxt.Destroy()
+        self.evNodeNameLbl.Destroy()
+        self.evNodeName.Destroy()
+        self.evidenceLblTxt.Destroy()
+        self.evidenceIndex.Destroy()
+        self.button2.Destroy()
+        
+
+    def OnClearEvidence(self, event):
+        self.evidence = []        
+        
+        
+    def OnDoInference(self, event):
+        #print self.cpts
+        #print self.evidence
+        #pots = self.cpts+self.evidence
+        #print pots
+        b.doInference(self.cpts+self.evidence)        
+        
+    #def onSetEvidence:
+        
+    #def onClearEvidence:
+    def button1Click(self,event):
+        nodename = self.nodename.GetValue()
+        #print "nodename"        
+        #print(nodename)
+        stateNames = self.statenames.GetValue().split(",")
+        #print "statenames"        
+        #print(stateNames)
+        if len(self.parent.GetValue())==0:
+            parentname = []
+        else:
+            parentname = self.parent.GetValue().split(",")
+        #print "parent name"
+        #print(parentname)
+        newnode = b.Node(nodename,stateNames,parentname)
+        cptlist = np.array(eval(self.cpt.GetValue()))
+        #print "cptlist"        
+        #print cptlist
+        newnode.setCPT(cptlist)
+        self.net.add(newnode)
+        #print "newnode"
+        #print newnode
+        self.createCPTs()
+        #for i in self.cpts:        
+        #    print i.table        
+        #print self.net.getNode(nodename)
+        #print(self.net.name)
+        #destroy the UI elements post submit
+        self.newnodeDisplayTxt.Destroy() 
+        self.nodenameLbl.Destroy()
+        self.nodename.Destroy()
+        self.statesDisplayTxt.Destroy()
+        self.statenameLbl.Destroy()
+        self.statenames.Destroy()
+        self.parentDisplayTxt.Destroy()
+        self.parentLbl.Destroy()
+        self.parent.Destroy()
+        self.button1.Destroy()
+        self.cpt.Destroy()
+        self.cptLbl.Destroy()
+        
+    def submitNetFunc(self,event):
+        #print(self.networkname.GetValue())
+        self.net = b.BayesianNetwork(self.networkname.GetValue())
+        self.networknameLbl.Destroy()
+        self.networkname.Destroy()
+        self.submitNet.Destroy()
+        #----------------------------------------------------------------------
+# Run the program
+if __name__ == "__main__":
+    app = wx.App(False)
+    frame = BayesianNetwork().Show()
+    app.MainLoop()
